@@ -5,6 +5,7 @@ import EquitySplitForm from './EquitySplitForm';
 import ExpensesTab from './ExpensesTab'; // Import ExpensesTab component
 import api from '../../services/api';
 import TaskTab from './TaskTab'; 
+import TaskListPage from './TaskListPage';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -40,7 +41,7 @@ const Dashboard = () => {
       <Box sx={{ mt: 3 }}>
         {activeTab === 0 && <EquitySplitForm equitySplit={equitySplit} setEquitySplit={setEquitySplit} />}
         {activeTab === 1 && <ExpensesTab />} 
-        {activeTab === 2 && <TaskTab />}
+        {activeTab === 2 && <TaskListPage />}
       </Box>
     </Container>
   );
