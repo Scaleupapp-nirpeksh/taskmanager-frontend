@@ -3,7 +3,7 @@ import { Box, Typography, Paper, Tooltip } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import WarningIcon from '@mui/icons-material/Warning';
 import api from '../../services/api';
-import TaskDetailDialog from './TaskDetailDialog'; // Import the TaskDetailDialog component
+import TaskDetailDialog from './TaskDetailDialog';
 
 const TaskStatusView = ({ tasks, showOnlyOverdue, onUpdateTasks }) => {
   const [taskColumns, setTaskColumns] = useState({
@@ -11,7 +11,7 @@ const TaskStatusView = ({ tasks, showOnlyOverdue, onUpdateTasks }) => {
     'In Progress': [],
     'Completed': [],
   });
-  const [selectedTask, setSelectedTask] = useState(null); // State to hold selected task for dialog
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
     const groupedTasks = tasks.reduce(
@@ -65,6 +65,19 @@ const TaskStatusView = ({ tasks, showOnlyOverdue, onUpdateTasks }) => {
     setSelectedTask(null);
   };
 
+  const getColumnStyles = (status) => {
+    switch (status) {
+      case 'To Do':
+        return { bgcolor: '#ffebee', borderColor: '#f44336', color: '#b71c1c' };
+      case 'In Progress':
+        return { bgcolor: '#e3f2fd', borderColor: '#2196f3', color: '#0d47a1' };
+      case 'Completed':
+        return { bgcolor: '#e8f5e9', borderColor: '#4caf50', color: '#1b5e20' };
+      default:
+        return {};
+    }
+  };
+
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <Box sx={{ display: 'flex', gap: 3, justifyContent: 'space-between', mt: 4 }}>
@@ -75,17 +88,27 @@ const TaskStatusView = ({ tasks, showOnlyOverdue, onUpdateTasks }) => {
                 ref={provided.innerRef}
                 {...provided.droppableProps}
                 sx={{
+                  ...getColumnStyles(status),
                   flex: 1,
                   minHeight: '80vh',
                   p: 2,
-                  bgcolor: '#f4f5f7',
                   boxShadow: 3,
                   borderRadius: 2,
+                  border: 1,
+                  borderColor: getColumnStyles(status).borderColor,
                   transition: 'all 0.3s ease',
                   '&:hover': { boxShadow: 6 },
                 }}
               >
-                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2, color: '#555' }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 'bold',
+                    mb: 2,
+                    color: getColumnStyles(status).color,
+                    textTransform: 'uppercase',
+                  }}
+                >
                   {status}
                 </Typography>
                 {taskColumns[status].map((task, index) => (
@@ -101,11 +124,12 @@ const TaskStatusView = ({ tasks, showOnlyOverdue, onUpdateTasks }) => {
                           p: 2,
                           bgcolor: '#fff',
                           borderRadius: 1,
-                          boxShadow: 2,
+                          boxShadow: 1,
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           position: 'relative',
+                          border: `2px solid ${getColumnStyles(status).borderColor}`,
                           '&:hover': {
                             boxShadow: 4,
                             bgcolor: '#fafafa',
