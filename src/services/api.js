@@ -3,14 +3,14 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: 'https://nirpekshnandan.com',
+  //baseURL: 'http://localhost:3001',
 });
 
 // Middleware to ensure no trailing slash is added to endpoints
 api.interceptors.request.use((config) => {
-  if (config.url.endsWith('/')) {
-    config.url = config.url.slice(0, -1); // Remove trailing slash if present
-  }
+  console.log('Request Headers:', config.headers); // Log headers to debug
   return config;
 });
+
 
 export default api;
