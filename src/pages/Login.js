@@ -1,4 +1,3 @@
-// frontend/src/pages/Login.js
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -26,14 +25,28 @@ const Login = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Card variant="outlined" sx={{ p: 4, mt: 5 }}>
-        <Typography variant="h4" gutterBottom align="center">
+    <Container maxWidth="sm" sx={{ p: { xs: 2, sm: 4 }, mt: { xs: 3, sm: 5 } }}>
+      <Card variant="outlined" sx={{ p: { xs: 2, sm: 4 }, boxShadow: 3 }}>
+        <Typography 
+          variant="h4" 
+          gutterBottom 
+          align="center" 
+          sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}
+        >
           Login
         </Typography>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box 
+          component="form" 
+          onSubmit={handleSubmit} 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: 2, 
+            alignItems: 'stretch' 
+          }}
+        >
           <TextField 
             label="Email" 
             name="email" 
@@ -42,6 +55,7 @@ const Login = () => {
             fullWidth 
             onChange={handleChange} 
             required 
+            sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}
           />
           <TextField 
             label="Password" 
@@ -51,11 +65,25 @@ const Login = () => {
             fullWidth 
             onChange={handleChange} 
             required 
+            sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}
           />
-          <Button variant="contained" color="primary" type="submit" fullWidth>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            type="submit" 
+            fullWidth 
+            sx={{ 
+              py: { xs: 1.5, sm: 2 }, 
+              fontSize: { xs: '0.875rem', sm: '1rem' } 
+            }}
+          >
             Login
           </Button>
-          <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+          <Typography 
+            variant="body2" 
+            align="center" 
+            sx={{ mt: 2, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+          >
             Don’t have an account? <Link to="/signup">Sign Up</Link>
           </Typography>
         </Box>
