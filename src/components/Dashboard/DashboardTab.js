@@ -22,7 +22,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { format } from 'date-fns';
 import api from '../../services/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Pie } from 'react-chartjs-2';
 import TaskDetailDialog from './TaskDetailDialog';
 
@@ -78,6 +78,7 @@ const DashboardTab = () => {
     tasks,
     investmentDetails,
     totalInvestment,
+    documents,
   } = dashboardData;
 
   // Prepare data for Pie chart
@@ -98,9 +99,10 @@ const DashboardTab = () => {
     ],
   };
 
-  // Compute overdue tasks
+  // Updated overdue tasks logic
+  const now = new Date();
   const overdueTasks = tasks.filter(
-    (task) => new Date(task.deadline) < new Date() && task.status !== 'Completed'
+    (task) => task.deadline && new Date(task.deadline) < now && task.status !== 'Completed'
   );
 
   return (
@@ -176,8 +178,10 @@ const DashboardTab = () => {
                 </TableHead>
                 <TableBody>
                   {tasks.map((task) => {
+                    // Inside your TableRow rendering for tasks
                     const isOverdue =
-                      new Date(task.deadline) < new Date() && task.status !== 'Completed';
+                    task.deadline && new Date(task.deadline) < now && task.status !== 'Completed';
+
                     return (
                       <TableRow
                         key={task._id}
@@ -313,6 +317,39 @@ const DashboardTab = () => {
               </CardContent>
             </Card>
           ))}
+        </AccordionDetails>
+      </Accordion>
+
+          {/* Documents Section */}
+          <Accordion defaultExpanded>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h6">Your Documents</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {documents && documents.length > 0 ? (
+            <List>
+              {documents.map((doc) => (
+                <ListItem key={doc._id}>
+                  <ListItemText
+                    primary={
+                      <Typography
+                        component={Link}
+                        to={`/documents/${doc._id}`}
+                        style={{ textDecoration: 'none' }}
+                      >
+                        {doc.title}
+                      </Typography>
+                    }
+                    secondary={`Last updated: ${new Date(
+                      doc.updatedAt
+                    ).toLocaleString()}`}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            <Typography>No documents found.</Typography>
+          )}
         </AccordionDetails>
       </Accordion>
 
