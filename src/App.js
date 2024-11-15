@@ -1,6 +1,6 @@
 // frontend/src/App.js
 import { SnackbarProvider } from 'notistack';
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
 import {
   AppBar,
@@ -15,12 +15,13 @@ import Signup from './pages/Signup';
 import Login from './pages/Login';
 import Dashboard from './components/Dashboard/Dashboard';
 
-// Lazy load components
-const Expense = React.lazy(() => import('./pages/Expense'));
-const Category = React.lazy(() => import('./pages/Category'));
-const DocumentList = React.lazy(() => import('./components/Dashboard/DocumentList'));
-const DocumentEdit = React.lazy(() => import('./components/Dashboard/DocumentEdit'));
-const DocumentView = React.lazy(() => import('./components/Dashboard/DocumentView'));
+// Updated code without lazy loading
+import Expense from './pages/Expense';
+import Category from './pages/Category';
+import DocumentList from './components/Dashboard/DocumentList';
+import DocumentEdit from './components/Dashboard/DocumentEdit';
+import DocumentView from './components/Dashboard/DocumentView';
+
 
 function App() {
   // Set up state for authentication status
@@ -86,13 +87,7 @@ function App() {
           )}
 
           {/* Routes */}
-          <Suspense
-            fallback={
-              <Box textAlign="center">
-                <CircularProgress />
-              </Box>
-            }
-          >
+          
             <Routes>
               <Route
                 path="/"
@@ -122,7 +117,7 @@ function App() {
                 <Route path="*" element={<Navigate to="/login" />} />
               )}
             </Routes>
-          </Suspense>
+         
         </Container>
       </Router>
     </SnackbarProvider>
