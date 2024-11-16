@@ -1,8 +1,7 @@
-// frontend/src/pages/Signup.js
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
-import { Container, TextField, Button, Card, Typography, Box, Alert } from '@mui/material';
+import { Container, TextField, Button, Card, Typography, Box, Alert, InputAdornment } from '@mui/material';
 
 const Signup = () => {
   const [formData, setFormData] = useState({ name: '', email: '', phone_number: '', password: '' });
@@ -18,7 +17,9 @@ const Signup = () => {
     e.preventDefault();
     setError('');
     try {
-      await api.post('/auth/register', formData);
+      const fullPhoneNumber = `+91${formData.phone_number.trim()}`;
+      const dataToSend = { ...formData, phone_number: fullPhoneNumber };
+      await api.post('/auth/register', dataToSend);
       setSuccess(true);
       setTimeout(() => {
         navigate('/login'); // Redirect to login after success
@@ -62,6 +63,9 @@ const Signup = () => {
             variant="outlined" 
             fullWidth 
             onChange={handleChange} 
+            InputProps={{
+              startAdornment: <InputAdornment position="start">+91</InputAdornment>,
+            }}
             required 
           />
           <TextField 
