@@ -18,11 +18,13 @@ import { Link } from 'react-router-dom';
 import { Edit, Delete } from '@mui/icons-material';
 import api from '../../services/api'; 
 import { useSnackbar } from 'notistack';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 
 const DocumentList = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const { enqueueSnackbar } = useSnackbar();
+  const [userId, setUserId] = useState(localStorage.getItem('userId'));
 
   useEffect(() => {
     fetchDocuments();
@@ -124,6 +126,14 @@ const DocumentList = () => {
                     <Delete color="error" />
                   </IconButton>
                 </TableCell>
+                <TableCell>
+            <Box display="flex" alignItems="center">
+              <ThumbUpIcon color="primary" fontSize="small" />
+              <Typography variant="body2" sx={{ ml: 0.5 }}>
+                {doc.likes.length}
+              </Typography>
+            </Box>
+          </TableCell>
               </TableRow>
             ))}
             {documents.length === 0 && (
