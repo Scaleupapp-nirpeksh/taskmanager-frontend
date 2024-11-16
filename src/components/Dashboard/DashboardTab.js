@@ -18,6 +18,9 @@ import {
   Card,
   CardContent,
   Alert,
+  List,          // Added
+  ListItem,      // Added
+  ListItemText,  // Added
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { format } from 'date-fns';
