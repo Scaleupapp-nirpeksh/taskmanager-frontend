@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Tooltip } from '@mui/material';
+import { Box, Typography, Paper, Tooltip, Button } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import WarningIcon from '@mui/icons-material/Warning';
 import api from '../../services/api';
@@ -11,18 +11,41 @@ const TaskStatusView = ({ tasks, showOnlyOverdue, onUpdateTasks }) => {
     'In Progress': [],
     'Completed': [],
   });
+  const [showOldCompletedTasks, setShowOldCompletedTasks] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
+  // Helper function to sort tasks by due date
+  const sortTasksByDueDate = (tasks) => {
+    return tasks.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+  };
+
+  // Group and process tasks
   useEffect(() => {
+    const now = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(now.getMonth() - 1);
+
     const groupedTasks = tasks.reduce(
       (acc, task) => {
-        acc[task.status] = [...(acc[task.status] || []), task];
+        if (task.status === 'Completed' && new Date(task.deadline) < oneMonthAgo) {
+          if (showOldCompletedTasks) {
+            acc['Completed'].push(task); // Show old tasks if toggled
+          }
+        } else {
+          acc[task.status].push(task);
+        }
         return acc;
       },
       { 'To Do': [], 'In Progress': [], 'Completed': [] }
     );
+
+    // Sort tasks in each column by due date
+    Object.keys(groupedTasks).forEach((status) => {
+      groupedTasks[status] = sortTasksByDueDate(groupedTasks[status]);
+    });
+
     setTaskColumns(groupedTasks);
-  }, [tasks]);
+  }, [tasks, showOldCompletedTasks]);
 
   const handleDragEnd = async (result) => {
     const { source, destination } = result;
@@ -156,6 +179,14 @@ const TaskStatusView = ({ tasks, showOnlyOverdue, onUpdateTasks }) => {
                     )}
                   </Draggable>
                 ))}
+                {status === 'Completed' && (
+                  <Button
+                    onClick={() => setShowOldCompletedTasks(!showOldCompletedTasks)}
+                    sx={{ mt: 2, color: getColumnStyles('Completed').color }}
+                  >
+                    {showOldCompletedTasks ? 'Collapse Old Tasks' : 'Show Old Tasks'}
+                  </Button>
+                )}
                 {provided.placeholder}
               </Paper>
             )}
