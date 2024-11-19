@@ -1,5 +1,3 @@
-// frontend/src/App.js
-import { SnackbarProvider } from 'notistack';
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
 import {
@@ -9,11 +7,12 @@ import {
   Container,
   Typography,
   Box,
-  CircularProgress,
 } from '@mui/material';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
 import Dashboard from './components/Dashboard/Dashboard';
+import NotificationBell from './components/Dashboard/NotificationBell';
+import { NotificationProvider } from './components/Dashboard/NotificationContext';
 
 // Updated code without lazy loading
 import Expense from './pages/Expense';
@@ -22,27 +21,23 @@ import DocumentList from './components/Dashboard/DocumentList';
 import DocumentEdit from './components/Dashboard/DocumentEdit';
 import DocumentView from './components/Dashboard/DocumentView';
 
-
 function App() {
-  // Set up state for authentication status
   const [isAuthenticated, setIsAuthenticated] = useState(
     Boolean(localStorage.getItem('token'))
   );
 
-  // Effect to listen for token changes in localStorage
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsAuthenticated(!!token);
   }, []);
 
-  // Update logout function to also update state
   const handleLogout = () => {
     localStorage.removeItem('token');
-    setIsAuthenticated(false); // Update state to re-render
+    setIsAuthenticated(false);
   };
 
   return (
-    <SnackbarProvider maxSnack={3}>
+    <NotificationProvider>
       <Router>
         {/* Navigation Bar */}
         <AppBar position="static">
@@ -50,6 +45,7 @@ function App() {
             <Typography variant="h6" sx={{ flexGrow: 1 }}>
               Foundry
             </Typography>
+            {isAuthenticated && <NotificationBell />}
             {isAuthenticated ? (
               <>
                 <Button color="inherit" component={Link} to="/dashboard">
@@ -87,40 +83,36 @@ function App() {
           )}
 
           {/* Routes */}
-          
-            <Routes>
-              <Route
-                path="/"
-                element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} />}
-              />
-              <Route
-                path="/signup"
-                element={isAuthenticated ? <Navigate to="/dashboard" /> : <Signup />}
-              />
-              <Route
-                path="/login"
-                element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />}
-              />
-
-              {/* Protected Routes */}
-              {isAuthenticated ? (
-                <>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/expense" element={<Expense />} />
-                  <Route path="/category" element={<Category />} />
-                  <Route path="/documents" element={<DocumentList />} />
-                  <Route path="/documents/new" element={<DocumentEdit />} />
-                  <Route path="/documents/:id" element={<DocumentView />} />
-                  <Route path="/documents/:id/edit" element={<DocumentEdit />} />
-                </>
-              ) : (
-                <Route path="*" element={<Navigate to="/login" />} />
-              )}
-            </Routes>
-         
+          <Routes>
+            <Route
+              path="/"
+              element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} />}
+            />
+            <Route
+              path="/signup"
+              element={isAuthenticated ? <Navigate to="/dashboard" /> : <Signup />}
+            />
+            <Route
+              path="/login"
+              element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />}
+            />
+            {isAuthenticated ? (
+              <>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/expense" element={<Expense />} />
+                <Route path="/category" element={<Category />} />
+                <Route path="/documents" element={<DocumentList />} />
+                <Route path="/documents/new" element={<DocumentEdit />} />
+                <Route path="/documents/:id" element={<DocumentView />} />
+                <Route path="/documents/:id/edit" element={<DocumentEdit />} />
+              </>
+            ) : (
+              <Route path="*" element={<Navigate to="/login" />} />
+            )}
+          </Routes>
         </Container>
       </Router>
-    </SnackbarProvider>
+    </NotificationProvider>
   );
 }
 
