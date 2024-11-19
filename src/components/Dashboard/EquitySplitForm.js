@@ -24,7 +24,6 @@ const EquitySplitForm = ({ setEquitySplit }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Fetch founders and equity data
   useEffect(() => {
     const fetchFoundersAndEquity = async () => {
       try {
@@ -32,41 +31,23 @@ const EquitySplitForm = ({ setEquitySplit }) => {
         const response = await api.get('/api/equity-split', {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        const { equitySplit, users } = response.data;
-
-        if (equitySplit) {
-          const fetchedFounders = equitySplit.map((founder) => ({
-            id: founder.userId._id,
-            name: founder.userId.name,
-            equity: founder.equity,
-          }));
-          setFounders(fetchedFounders);
-
-          const initialEquity = fetchedFounders.reduce((acc, founder) => {
-            acc[founder.id] = founder.equity || 0;
-            return acc;
-          }, {});
-          setEquityValues(initialEquity);
-        } else if (users) {
-          const fetchedUsers = users.map((user) => ({
-            id: user.id,
-            name: user.name,
-            equity: 0,
-          }));
-          setFounders(fetchedUsers);
-
-          const initialEquity = fetchedUsers.reduce((acc, user) => {
-            acc[user.id] = 0;
-            return acc;
-          }, {});
-          setEquityValues(initialEquity);
-        }
+  
+        const fetchedFounders = response.data.founders;
+  
+        setFounders(fetchedFounders);
+  
+        // Initialize equity values for all founders
+        const initialEquity = fetchedFounders.reduce((acc, founder) => {
+          acc[founder.id] = founder.equity || 0;
+          return acc;
+        }, {});
+  
+        setEquityValues(initialEquity);
       } catch (err) {
         setError('Failed to fetch founders and equity values.');
       }
     };
-
+  
     fetchFoundersAndEquity();
   }, []);
 
