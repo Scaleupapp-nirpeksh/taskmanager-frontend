@@ -45,9 +45,10 @@ const ExpensesTab = () => {
     endDate: '',
     minAmount: '',
     maxAmount: '',
-    assigned_to: '',
+    user: '',
     category: '',
-    subcategory: ''
+    subcategory: '',
+    expense_name: ''
   });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -75,7 +76,6 @@ const ExpensesTab = () => {
     fetchAllMonthlyParities();
     fetchProjections();
   }, [filters, page]);
-
   const fetchExpenses = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -83,7 +83,7 @@ const ExpensesTab = () => {
         headers: { Authorization: `Bearer ${token}` },
         params: { ...filters, page, limit: 10 },
       });
-
+  
       const { expenses, totalPages } = response.data;
       setExpenses(expenses || []);
       setTotalPages(totalPages || 1);
@@ -92,6 +92,7 @@ const ExpensesTab = () => {
       setExpenses([]);
     }
   };
+  
 
   const fetchAllMonthlyParities = async () => {
     try {
@@ -197,11 +198,13 @@ const fetchCategories = async () => {
       endDate: '',
       minAmount: '',
       maxAmount: '',
-      assigned_to: '',
+      user: '',
       category: '',
-      subcategory: ''
+      subcategory: '',
+      expense_name: '',
     });
     setSubcategories([]);
+    setPage(1);
   };
 
   const handlePageChange = (event, value) => {
@@ -225,45 +228,59 @@ const fetchCategories = async () => {
       console.error(err);
     }
   };
+  
+  
+
+  const userIdToNameMap = users.reduce((map, user) => {
+    map[user._id] = user.name;
+    return map;
+  }, {});
 
   const processChartData = (data) => {
     const monthlySpending = {};
     const categorySpending = {};
     let totalSpendAmount = 0;
     let monthCount = new Set();
-
+    const userNames = new Set(); // Initialize a Set to collect unique user names
+  
     data.forEach((item) => {
       const { year, month, user, category, totalAmount } = item;
       const monthLabel = `${year}-${month.toString().padStart(2, '0')}`;
       monthCount.add(monthLabel);
-
+  
+      const userName = user || 'Unknown';
+      userNames.add(userName); // Collect user names
+  
       if (!monthlySpending[monthLabel]) monthlySpending[monthLabel] = {};
-      if (!monthlySpending[monthLabel][user]) monthlySpending[monthLabel][user] = 0;
-      monthlySpending[monthLabel][user] += totalAmount;
-
+      if (!monthlySpending[monthLabel][userName]) monthlySpending[monthLabel][userName] = 0;
+      monthlySpending[monthLabel][userName] += totalAmount;
+  
       if (!categorySpending[category]) categorySpending[category] = 0;
       categorySpending[category] += totalAmount;
-
+  
       totalSpendAmount += totalAmount;
     });
-
+  
     const numberOfMonths = monthCount.size || 1;
     const calculatedBurnRate = totalSpendAmount / numberOfMonths;
     setBurnRate(calculatedBurnRate);
-
     setTotalSpend(totalSpendAmount);
-
+  
+    // Prepare data for the bar chart
     if (Object.keys(monthlySpending).length > 0) {
+      const labels = Object.keys(monthlySpending).sort(); // Sort the months for consistent order
+      const datasets = Array.from(userNames).map((userName, idx) => ({
+        label: userName,
+        data: labels.map((monthLabel) => monthlySpending[monthLabel][userName] || 0),
+        backgroundColor: `rgba(${(idx * 50) % 255}, ${(idx * 80) % 255}, ${(idx * 110) % 255}, 0.5)`,
+      }));
       setChartData({
-        labels: Object.keys(monthlySpending),
-        datasets: Object.keys(monthlySpending[Object.keys(monthlySpending)[0]]).map((user, idx) => ({
-          label: user,
-          data: Object.values(monthlySpending).map((month) => month[user] || 0),
-          backgroundColor: `rgba(${(idx + 1) * 40 % 255}, 99, 132, 0.5)`,
-        })),
+        labels,
+        datasets,
       });
     }
-
+  
+    // Prepare data for the pie chart
     if (Object.keys(categorySpending).length > 0) {
       setCategoryChartData({
         labels: Object.keys(categorySpending),
@@ -272,18 +289,16 @@ const fetchCategories = async () => {
             label: 'Category Spend',
             data: Object.values(categorySpending),
             backgroundColor: [
-              'rgba(75, 192, 192, 0.6)',
-              'rgba(255, 99, 132, 0.6)',
-              'rgba(255, 206, 86, 0.6)',
-              'rgba(54, 162, 235, 0.6)',
-              'rgba(153, 102, 255, 0.6)',
-              'rgba(255, 159, 64, 0.6)',
+              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+              // Add more colors if needed
             ],
           },
         ],
       });
     }
   };
+  
+  
 
   const fetchProjections = async () => {
     try {
@@ -387,78 +402,181 @@ const fetchCategories = async () => {
           <Typography variant="h6">Detailed Expenses</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-            {['startDate', 'endDate', 'minAmount', 'maxAmount'].map((field) => (
-              <TextField
-                key={field}
-                label={field === 'startDate' ? 'Start Date' : field === 'endDate' ? 'End Date' : field.charAt(0).toUpperCase() + field.slice(1)}
-                name={field}
-                type={field === 'startDate' || field === 'endDate' ? 'date' : 'text'}
-                variant="outlined"
-                size="small"
-                onChange={handleFilterChange}
-                value={filters[field]}
-                InputLabelProps={field === 'startDate' || field === 'endDate' ? { shrink: true } : {}}
-                sx={{ width: '150px' }}
-              />
-            ))}
-            <TextField
-              label="Category"
-              name="category"
-              variant="outlined"
-              select
-              size="small"
-              onChange={handleCategoryChange}
-              value={filters.category}
-              sx={{ width: '150px' }}
-            >
-              {categories.map(cat => (
-                <MenuItem key={cat.category_name} value={cat.category_name}>
-                  {cat.category_name}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label="Assigned To"
-              name="assigned_to"
-              variant="outlined"
-              select
-              size="small"
-              onChange={handleFilterChange}
-              value={filters.assigned_to}
-              sx={{ width: '150px' }}
-            >
-              <MenuItem value="">All Users</MenuItem>
-              {users.map(user => (
-                <MenuItem key={user._id} value={user.name}>
-                  {user.name}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Button variant="outlined" color="secondary" size="small" onClick={clearFilters}>Clear</Button>
-          </Box>
+        <Paper sx={{ p: 2, mb: 2 }}>
+    <Typography variant="h6" gutterBottom>
+      Filters
+    </Typography>
+    <Grid container spacing={2}>
+      {/* Start Date */}
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          label="Start Date"
+          type="date"
+          name="startDate"
+          value={filters.startDate}
+          onChange={handleFilterChange}
+          fullWidth
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+      {/* End Date */}
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          label="End Date"
+          type="date"
+          name="endDate"
+          value={filters.endDate}
+          onChange={handleFilterChange}
+          fullWidth
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+      {/* Founder */}
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          label="Founder"
+          name="user"
+          select
+          value={filters.user}
+          onChange={handleFilterChange}
+          fullWidth
+        >
+          <MenuItem value="">All</MenuItem>
+          {users.map((user) => (
+            <MenuItem key={user._id} value={user._id}>
+              {user.name}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+      {/* Expense Name */}
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          label="Expense Name"
+          name="expense_name"
+          value={filters.expense_name}
+          onChange={handleFilterChange}
+          fullWidth
+        />
+      </Grid>
+      {/* Category */}
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          label="Category"
+          name="category"
+          select
+          value={filters.category}
+          onChange={handleCategoryChange}
+          fullWidth
+        >
+          <MenuItem value="">All</MenuItem>
+          {categories.map((cat) => (
+            <MenuItem key={cat.category_name} value={cat.category_name}>
+              {cat.category_name}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+      {/* Subcategory */}
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          label="Subcategory"
+          name="subcategory"
+          select
+          value={filters.subcategory}
+          onChange={handleFilterChange}
+          fullWidth
+          disabled={!filters.category}
+        >
+          <MenuItem value="">All</MenuItem>
+          {subcategories.map((sub) => (
+            <MenuItem key={sub} value={sub}>
+              {sub}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+      {/* Apply and Clear Filters */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Box sx={{ mt: 1.5 }}>
+          <Button variant="contained" color="primary" onClick={fetchExpenses} sx={{ mr: 1 }}>
+            Apply Filters
+          </Button>
+          <Button variant="text" color="secondary" onClick={clearFilters}>
+            Clear
+          </Button>
+        </Box>
+      </Grid>
+    </Grid>
+  </Paper>
+          
+              {/* Summary Cards */}
+    <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid item xs={12} sm={6}>
+        <Paper elevation={3} sx={{ p: 2 }}>
+          <Typography variant="h6" color="textSecondary">
+            Total Spend So Far
+          </Typography>
+          <Typography variant="h4" color="primary">
+            ₹{totalSpend.toFixed(2)}
+          </Typography>
+        </Paper>
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <Paper elevation={3} sx={{ p: 2 }}>
+          <Typography variant="h6" color="textSecondary">
+            Monthly Burn Rate
+          </Typography>
+          <Typography variant="h4" color="secondary">
+            ₹{burnRate.toFixed(2)}
+          </Typography>
+        </Paper>
+      </Grid>
+    </Grid>
 
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6">Monthly Spending by User</Typography>
-                <Bar data={chartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6">Spending by Category</Typography>
-                <Pie data={categoryChartData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }} />
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Paper sx={{ p: 3, textAlign: 'center' }}>
-                <Typography variant="h6">Total Spend</Typography>
-                <Typography variant="h4" color="primary" fontWeight="bold">₹{totalSpend.toLocaleString()}</Typography>
-                <Typography variant="body1" color="textSecondary">Burn Rate: ₹{burnRate.toFixed(2)} / month</Typography>
-              </Paper>
-            </Grid>
-          </Grid>
+    {/* Bar Chart */}
+    <Typography variant="h6" sx={{ mt: 4 }}>
+      Monthly Spending by Founder
+    </Typography>
+    <Box sx={{ height: 400 }}>
+      <Bar
+        data={chartData}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+            },
+            title: {
+              display: false,
+            },
+          },
+        }}
+      />
+    </Box>
+
+    {/* Pie Chart */}
+    <Typography variant="h6" sx={{ mt: 4 }}>
+      Spending by Category
+    </Typography>
+    <Box sx={{ height: 400 }}>
+      <Pie
+        data={categoryChartData}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+            },
+            title: {
+              display: false,
+            },
+          },
+        }}
+      />
+    </Box>
 
           <TableContainer component={Paper} sx={{ mb: 2 }}>
             <Table>
@@ -473,25 +591,27 @@ const fetchCategories = async () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {expenses.length > 0 ? (
-                  expenses.map((expense) => (
-                    <TableRow key={expense._id}>
-                      <TableCell>{expense.expense_name}</TableCell>
-                      <TableCell>{expense.category}</TableCell>
-                      <TableCell>{expense.subcategory}</TableCell>
-                      <TableCell>{expense.assigned_to}</TableCell>
-                      <TableCell>₹{expense.amount}</TableCell>
-                      <TableCell>{format(new Date(expense.date), 'dd-MM-yyyy')}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      No expenses found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
+  {expenses.length > 0 ? (
+    expenses.map((expense) => (
+      <TableRow key={expense._id}>
+        <TableCell>{expense.expense_name}</TableCell>
+        <TableCell>{expense.category}</TableCell>
+        <TableCell>{expense.subcategory}</TableCell>
+        <TableCell>
+          {expense.assigned_to ? expense.assigned_to.name : 'Unassigned'}
+        </TableCell>
+        <TableCell>₹{expense.amount}</TableCell>
+        <TableCell>{format(new Date(expense.date), 'dd-MM-yyyy')}</TableCell>
+      </TableRow>
+    ))
+  ) : (
+    <TableRow>
+      <TableCell colSpan={6} align="center">
+        No expenses found
+      </TableCell>
+    </TableRow>
+  )}
+</TableBody>
             </Table>
           </TableContainer>
 
